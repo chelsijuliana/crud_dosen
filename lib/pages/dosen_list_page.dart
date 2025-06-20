@@ -28,8 +28,39 @@ class _DosenListPageState extends State<DosenListPage> {
   }
 
   Future<void> deleteDosen(int no) async {
-    await http.delete(Uri.parse('http://192.168.100.213:8000/api/dosen/$no'));
-    fetchDosens();
+    final response = await http.delete(Uri.parse('http://192.168.100.213:8000/api/dosen/$no'));
+    if (response.statusCode == 200 || response.statusCode == 204) {
+      fetchDosens();
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Gagal menghapus data dosen')),
+      );
+    }
+  }
+
+  void confirmDelete(int no) {
+    showDialog(
+      context: context,
+      builder: (BuildContext dialogContext) {
+        return AlertDialog(
+          title: Text('Konfirmasi'),
+          content: Text('Apakah Anda yakin ingin menghapus data dosen ini?'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(),
+              child: Text('Tidak'),
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.of(dialogContext).pop();
+                deleteDosen(no);
+              },
+              child: Text('Ya', style: TextStyle(color: Colors.red)),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   @override
@@ -49,7 +80,10 @@ class _DosenListPageState extends State<DosenListPage> {
           return Card(
             margin: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             child: ListTile(
-              title: Text(dosen['nama_lengkap'], style: TextStyle(fontWeight: FontWeight.bold)),
+              title: Text(
+                dosen['nama_lengkap'],
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
               subtitle: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -74,7 +108,7 @@ class _DosenListPageState extends State<DosenListPage> {
                   ),
                   IconButton(
                     icon: Icon(Icons.delete, color: Colors.red),
-                    onPressed: () => deleteDosen(dosen['no']),
+                    onPressed: () => confirmDelete(dosen['no']),
                   ),
                 ],
               ),
